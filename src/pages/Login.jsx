@@ -11,6 +11,7 @@ export default function Login() {
   const { signIn, signUp } = useAuth()
   const navigate = useNavigate()
   const [mode, setMode] = useState('signin') // 'signin' | 'signup'
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -28,7 +29,7 @@ export default function Login() {
         if (error) throw error
         navigate('/')
       } else {
-        const { error } = await signUp(email, password)
+        const { error } = await signUp(email, password, { full_name: name })
         if (error) throw error
         setInfo('Account created. Check your email if confirmation is required, then sign in.')
         setMode('signin')
@@ -60,6 +61,17 @@ export default function Login() {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {mode === 'signup' && (
+            <Input
+              label="Full name"
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name"
+              autoComplete="name"
+            />
+          )}
           <Input
             label="Email"
             type="email"
@@ -110,6 +122,7 @@ export default function Login() {
               setMode(mode === 'signin' ? 'signup' : 'signin')
               setError('')
               setInfo('')
+              setName('')
             }}
             className="text-brand-400 font-semibold hover:underline"
           >
