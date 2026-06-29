@@ -26,6 +26,41 @@ export async function resolveCoinId(symbolOrName) {
   return null
 }
 
+/** Live search-as-you-type for crypto symbols/names, with logos. Free, no key. */
+export async function searchCryptoSymbols(query) {
+  if (!query || query.trim().length < 1) return []
+  const res = await fetch(`${COINGECKO_BASE}/search?query=${encodeURIComponent(query.trim())}`)
+  if (!res.ok) return []
+  const data = await res.json()
+  return (data.coins || []).slice(0, 8).map((c) => ({
+    symbol: c.symbol.toUpperCase(),
+    name: c.name,
+    logoUrl: c.thumb || c.large || null,
+    id: c.id,
+  }))
+}
+
+/** Live search-as-you-type for stock/ETF symbols. Needs a free Twelve Data key. */
+export async function searchStockSymbols(query) {
+  const apiKey = import.meta.env.VITE_TWELVEDATA_API_KEY
+  if (!apiKey || !query || query.trim().length < 1) return []
+  try {
+    const res = await fetch(
+      `${TWELVEDATA_BASE}/symbol_search?symbol=${encodeURIComponent(query.trim())}&apikey=${apiKey}`
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    return (data.data || []).slice(0, 8).map((s) => ({
+      symbol: s.symbol,
+      name: s.instrument_name,
+      logoUrl: getLogoUrl('stock', s.symbol),
+      exchange: s.exchange,
+    }))
+  } catch {
+    return []
+  }
+}
+
 export async function getCryptoPrices(symbols, vsCurrency = 'usd') {
   const ids = []
   const idToSymbol = {}
