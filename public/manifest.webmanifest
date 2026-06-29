@@ -1,0 +1,24 @@
+{
+  "name": "WealthFlow — Investment Tracker",
+  "short_name": "WealthFlow",
+  "description": "Personal investment tracker for ledgers, stocks, ETFs, and crypto.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#050710",
+  "theme_color": "#050710",
+  "icons": [
+    {
+      "src": "favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
