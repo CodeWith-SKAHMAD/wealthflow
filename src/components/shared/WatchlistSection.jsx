@@ -5,6 +5,7 @@ import Button from '../ui/Button'
 import Modal from '../ui/Modal'
 import { Input } from '../ui/Input'
 import AssetLogo from '../ui/AssetLogo'
+import SymbolAutocomplete from './SymbolAutocomplete'
 import TradingViewMiniChart from './TradingViewMiniChart'
 import { useAuth } from '../../context/AuthContext'
 import { addWatchlistItem, deleteWatchlistItem } from '../../lib/db'
@@ -22,6 +23,7 @@ export default function WatchlistSection({ assetType, items, onChanged }) {
   const [symbol, setSymbol] = useState('')
   const [tvSymbol, setTvSymbol] = useState('')
   const [name, setName] = useState('')
+  const [logoUrl, setLogoUrl] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -29,7 +31,14 @@ export default function WatchlistSection({ assetType, items, onChanged }) {
     setSymbol('')
     setTvSymbol('')
     setName('')
+    setLogoUrl(null)
     setError('')
+  }
+
+  const handlePickSymbol = (result) => {
+    setSymbol(result.symbol)
+    setName(result.name)
+    setLogoUrl(result.logoUrl)
   }
 
   const handleAdd = async (e) => {
@@ -43,7 +52,7 @@ export default function WatchlistSection({ assetType, items, onChanged }) {
         asset_type: assetType,
         symbol: tvSymbol.trim() || symbol.trim().toUpperCase(),
         name: name.trim() || symbol.trim().toUpperCase(),
-        logo_url: getLogoUrl(assetType, symbol.trim()),
+        logo_url: logoUrl || getLogoUrl(assetType, symbol.trim()),
       })
       reset()
       setModalOpen(false)
@@ -103,12 +112,16 @@ export default function WatchlistSection({ assetType, items, onChanged }) {
 
       <Modal open={modalOpen} onClose={() => { setModalOpen(false); reset() }} title="Add to Watchlist">
         <form onSubmit={handleAdd} className="flex flex-col gap-4">
-          <Input
+          <SymbolAutocomplete
+            assetType={assetType}
             label="Symbol"
             value={symbol}
-            onChange={(e) => setSymbol(e.target.value)}
-            placeholder={assetType === 'crypto' ? 'BTC' : 'AAPL'}
-            required
+            onChange={(v) => {
+              setSymbol(v)
+              setLogoUrl(null)
+            }}
+            onPick={handlePickSymbol}
+            placeholder={assetType === 'crypto' ? 'BTC or Bitcoin' : 'AAPL or Apple'}
           />
           <Input
             label="Display name (optional)"

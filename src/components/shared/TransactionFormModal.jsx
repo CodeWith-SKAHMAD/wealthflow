@@ -3,6 +3,7 @@ import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { Input, Select, Textarea } from '../ui/Input'
+import SymbolAutocomplete from './SymbolAutocomplete'
 import { addHoldingsTransaction, updateHoldingsTransaction } from '../../lib/db'
 import { useAuth } from '../../context/AuthContext'
 import { getLogoUrl } from '../../lib/prices'
@@ -18,6 +19,7 @@ export default function TransactionFormModal({ open, onClose, assetType, onSaved
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [symbol, setSymbol] = useState('')
   const [name, setName] = useState('')
+  const [logoUrl, setLogoUrl] = useState(null)
   const [quantity, setQuantity] = useState('')
   const [price, setPrice] = useState('')
   const [total, setTotal] = useState('')
@@ -32,6 +34,7 @@ export default function TransactionFormModal({ open, onClose, assetType, onSaved
       setDate(editingTransaction.txn_date)
       setSymbol(editingTransaction.symbol)
       setName(editingTransaction.name || '')
+      setLogoUrl(editingTransaction.logo_url || null)
       setQuantity(String(editingTransaction.quantity))
       setPrice(String(editingTransaction.price))
       setTotal(String(editingTransaction.total_cost))
@@ -45,18 +48,24 @@ export default function TransactionFormModal({ open, onClose, assetType, onSaved
     setDate(new Date().toISOString().slice(0, 10))
     setSymbol('')
     setName('')
+    setLogoUrl(null)
     setQuantity('')
     setPrice('')
     setTotal('')
     setCurrency('USD')
     setNote('')
     setError('')
-    setLastEdited(null)
   }
 
   const handleClose = () => {
     reset()
     onClose()
+  }
+
+  const handlePickSymbol = (result) => {
+    setSymbol(result.symbol)
+    setName(result.name)
+    setLogoUrl(result.logoUrl)
   }
 
   // Auto-calc: any two of {quantity, price, total} determine the third.
@@ -98,7 +107,7 @@ export default function TransactionFormModal({ open, onClose, assetType, onSaved
         asset_type: assetType,
         symbol: symbol.trim().toUpperCase(),
         name: name.trim() || symbol.trim().toUpperCase(),
-        logo_url: getLogoUrl(assetType, symbol.trim()),
+        logo_url: logoUrl || getLogoUrl(assetType, symbol.trim()),
         txn_type: txnType,
         quantity: q,
         price: p,
@@ -165,12 +174,16 @@ export default function TransactionFormModal({ open, onClose, assetType, onSaved
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Input
+          <SymbolAutocomplete
+            assetType={assetType}
             label={`${ASSET_LABELS[assetType]} symbol`}
             value={symbol}
-            onChange={(e) => setSymbol(e.target.value)}
-            placeholder={assetType === 'crypto' ? 'BTC' : 'AAPL'}
-            required
+            onChange={(v) => {
+              setSymbol(v)
+              setLogoUrl(null)
+            }}
+            onPick={handlePickSymbol}
+            placeholder={assetType === 'crypto' ? 'BTC or Bitcoin' : 'AAPL or Apple'}
           />
           <Input
             label="Display name (optional)"
@@ -179,6 +192,11 @@ export default function TransactionFormModal({ open, onClose, assetType, onSaved
             placeholder={assetType === 'crypto' ? 'Bitcoin' : 'Apple Inc.'}
           />
         </div>
+        {assetType !== 'crypto' && (
+          <p className="text-[11px] opacity-40 -mt-2">
+            Suggestions need a free Twelve Data API key (see README). You can still type the symbol manually.
+          </p>
+        )}
 
         <div className="grid grid-cols-3 gap-3">
           <Input
