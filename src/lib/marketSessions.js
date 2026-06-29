@@ -1,10 +1,10 @@
 // Standard forex/market trading session windows, defined in UTC hours.
 // (Approximate consensus hours used by most session-tracker tools.)
 export const SESSIONS = [
-  { key: 'sydney', label: 'Sydney', startUTC: 22, endUTC: 7, color: '#a855f7' },
-  { key: 'asia', label: 'Asia', startUTC: 0, endUTC: 9, color: '#2563eb' },
-  { key: 'london', label: 'London', startUTC: 7, endUTC: 16, color: '#0d9488' },
-  { key: 'newyork', label: 'New York', startUTC: 12, endUTC: 21, color: '#7c3aed' },
+  { key: 'sydney', label: 'Sydney', startUTC: 22, endUTC: 7, color: '#c084fc' },
+  { key: 'asia', label: 'Asia', startUTC: 0, endUTC: 9, color: '#3b82f6' },
+  { key: 'london', label: 'London', startUTC: 7, endUTC: 16, color: '#14b8a6' },
+  { key: 'newyork', label: 'New York', startUTC: 12, endUTC: 21, color: '#a78bfa' },
 ]
 
 function utcHourFraction(date) {
