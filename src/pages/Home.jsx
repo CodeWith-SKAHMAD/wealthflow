@@ -9,6 +9,8 @@ import {
   Layers,
   Bitcoin,
   Scale,
+  ArrowDownCircle,
+  ArrowUpCircle,
 } from 'lucide-react'
 import GlassCard from '../components/ui/GlassCard'
 import Button from '../components/ui/Button'
@@ -17,6 +19,7 @@ import AssetLogo from '../components/ui/AssetLogo'
 import LineChartCard from '../components/charts/LineChartCard'
 import PieChartCard from '../components/charts/PieChartCard'
 import CashInOutModal from '../components/shared/CashInOutModal'
+import TransactionFormModal from '../components/shared/TransactionFormModal'
 import { useLedger } from '../hooks/useLedger'
 import { usePortfolio } from '../hooks/usePortfolio'
 import {
@@ -28,10 +31,11 @@ import {
 
 export default function Home() {
   const [modalCurrency, setModalCurrency] = useState(null)
+  const [modalDirection, setModalDirection] = useState('in')
+  const [txnModal, setTxnModal] = useState(null) // 'stock' | 'etf' | 'crypto'
 
   const eur = useLedger('EUR')
   const usdt = useLedger('USDT')
-
   const stocks = usePortfolio('stock')
   const etfs = usePortfolio('etf')
   const crypto = usePortfolio('crypto')
@@ -68,79 +72,83 @@ export default function Home() {
     { name: 'Crypto', value: cryptoInvested },
   ].filter((d) => d.value > 0)
 
+  const openCashModal = (currency, direction) => {
+    setModalCurrency(currency)
+    setModalDirection(direction)
+  }
+
+  const handleTxnSaved = () => {
+    stocks.reload()
+    etfs.reload()
+    crypto.reload()
+  }
+
   return (
     <div className="flex flex-col gap-5">
+      {/* Ledger boxes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <LedgerBox
           currency="EUR"
           icon={Euro}
           balance={eur.balance}
           loading={eur.loading}
-          onAdd={() => setModalCurrency('EUR')}
+          onCashIn={() => openCashModal('EUR', 'in')}
+          onCashOut={() => openCashModal('EUR', 'out')}
         />
         <LedgerBox
           currency="USDT"
           icon={DollarSign}
           balance={usdt.balance}
           loading={usdt.loading}
-          onAdd={() => setModalCurrency('USDT')}
+          onCashIn={() => openCashModal('USDT', 'in')}
+          onCashOut={() => openCashModal('USDT', 'out')}
         />
       </div>
 
+      {/* Stat boxes */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <StatBox
-          label="Total Investment"
-          value={formatMoney(investedTotal, 'USD')}
-          icon={Wallet}
-          accent="brand"
-          loading={stocks.loading || etfs.loading || crypto.loading}
-        />
-        <StatBox
-          label="Stock Investment"
-          value={formatMoney(stockInvested, 'USD')}
-          icon={LineChartIcon}
-          accent="brand"
-          loading={stocks.loading}
-        />
-        <StatBox
-          label="ETF Investment"
-          value={formatMoney(etfInvested, 'USD')}
-          icon={Layers}
-          accent="brand"
-          loading={etfs.loading}
-        />
-        <StatBox
-          label="Crypto Investment"
-          value={formatMoney(cryptoInvested, 'USD')}
-          icon={Bitcoin}
-          accent="brand"
-          loading={crypto.loading}
-        />
-        <StatBox
-          label="Unrealized P&L"
-          value={formatMoney(unrealizedTotal, 'USD')}
-          icon={Scale}
-          accent={unrealizedTotal >= 0 ? 'profit' : 'loss'}
-          loading={stocks.priceLoading || crypto.priceLoading}
-        />
+        <StatBox label="Total Investment" value={formatMoney(investedTotal, 'USD')} icon={Wallet} accent="brand" loading={stocks.loading || etfs.loading || crypto.loading} />
+        <StatBox label="Stock Investment" value={formatMoney(stockInvested, 'USD')} icon={LineChartIcon} accent="brand" loading={stocks.loading} />
+        <StatBox label="ETF Investment" value={formatMoney(etfInvested, 'USD')} icon={Layers} accent="brand" loading={etfs.loading} />
+        <StatBox label="Crypto Investment" value={formatMoney(cryptoInvested, 'USD')} icon={Bitcoin} accent="brand" loading={crypto.loading} />
+        <StatBox label="Unrealized P&L" value={formatMoney(unrealizedTotal, 'USD')} icon={Scale} accent={unrealizedTotal >= 0 ? 'profit' : 'loss'} loading={stocks.priceLoading || crypto.priceLoading} />
       </div>
 
+      {/* Quick add transaction */}
+      <GlassCard className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-display font-semibold text-sm">Quick Add Transaction</h3>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            onClick={() => setTxnModal('stock')}
+            className="flex items-center justify-center gap-2 py-2.5 rounded-xl glass-inset hover:bg-white/10 text-sm font-semibold transition-all"
+          >
+            <LineChartIcon size={15} className="text-brand-400" /> Stock
+          </button>
+          <button
+            onClick={() => setTxnModal('etf')}
+            className="flex items-center justify-center gap-2 py-2.5 rounded-xl glass-inset hover:bg-white/10 text-sm font-semibold transition-all"
+          >
+            <Layers size={15} className="text-brand-400" /> ETF
+          </button>
+          <button
+            onClick={() => setTxnModal('crypto')}
+            className="flex items-center justify-center gap-2 py-2.5 rounded-xl glass-inset hover:bg-white/10 text-sm font-semibold transition-all"
+          >
+            <Bitcoin size={15} className="text-brand-400" /> Crypto
+          </button>
+        </div>
+      </GlassCard>
+
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <LineChartCard
-          title="Ledger Balance (EUR + USDT)"
-          data={mergeLedgerCharts(eur.chartData, usdt.chartData)}
-          color="#5b9bea"
-          valuePrefix="$"
-        />
-        <LineChartCard
-          title="Investment Over Time"
-          data={investmentTrendData}
-          color="#22c55e"
-          valuePrefix="$"
-        />
+        <LineChartCard title="Ledger Balance (EUR + USDT)" data={mergeLedgerCharts(eur.chartData, usdt.chartData)} color="#5b9bea" valuePrefix="$" />
+        <LineChartCard title="Investment Over Time" data={investmentTrendData} color="#22c55e" valuePrefix="$" />
         <PieChartCard title="Investment Allocation" data={pieData} />
       </div>
 
+      {/* Holdings */}
       <GlassCard>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-display font-semibold">Holdings</h3>
@@ -165,22 +173,12 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-xs opacity-45 uppercase tracking-wide mb-0.5">
-                    Unrealized PnL
-                  </div>
-                  <div
-                    className={`numeric font-semibold text-sm px-2 py-0.5 rounded-lg inline-block ${
-                      h.unrealizedPnl == null
-                        ? 'opacity-40'
-                        : h.unrealizedPnl >= 0
-                        ? 'text-profit-400 bg-profit-500/10'
-                        : 'text-loss-400 bg-loss-500/10'
-                    }`}
-                  >
+                  <div className="text-xs opacity-45 uppercase tracking-wide mb-0.5">Unrealized PnL</div>
+                  <div className={`numeric font-semibold text-sm px-2 py-0.5 rounded-lg inline-block ${
+                    h.unrealizedPnl == null ? 'opacity-40' : h.unrealizedPnl >= 0 ? 'text-profit-400 bg-profit-500/10' : 'text-loss-400 bg-loss-500/10'
+                  }`}>
                     {h.unrealizedPnl == null ? 'No price' : formatMoney(h.unrealizedPnl, h.currency)}
-                    {h.unrealizedPct != null && (
-                      <span className="ml-1 opacity-70">({formatPct(h.unrealizedPct)})</span>
-                    )}
+                    {h.unrealizedPct != null && <span className="ml-1 opacity-70">({formatPct(h.unrealizedPct)})</span>}
                   </div>
                 </div>
               </div>
@@ -189,37 +187,56 @@ export default function Home() {
         )}
       </GlassCard>
 
+      {/* Modals */}
       <CashInOutModal
         open={Boolean(modalCurrency)}
         currency={modalCurrency}
+        initialDirection={modalDirection}
         onClose={() => setModalCurrency(null)}
         onSaved={() => (modalCurrency === 'EUR' ? eur.reload() : usdt.reload())}
       />
+      {txnModal && (
+        <TransactionFormModal
+          open
+          assetType={txnModal}
+          onClose={() => setTxnModal(null)}
+          onSaved={() => { handleTxnSaved(); setTxnModal(null) }}
+        />
+      )}
     </div>
   )
 }
 
-function LedgerBox({ currency, icon: Icon, balance, loading, onAdd }) {
+function LedgerBox({ currency, icon: Icon, balance, loading, onCashIn, onCashOut }) {
   return (
-    <GlassCard className="p-6 relative overflow-hidden">
+    <GlassCard className="p-5 relative overflow-hidden">
       <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-brand-500/10 blur-2xl" />
-      <div className="flex items-center justify-between relative z-10">
-        <div>
-          <div className="flex items-center gap-2 opacity-60 text-sm font-medium mb-2">
-            <Icon size={15} /> {currency} Ledger
-          </div>
-          {loading ? (
-            <div className="h-9 w-32 rounded bg-white/10 animate-pulse" />
-          ) : (
-            <div className="font-display font-bold text-3xl numeric">
-              {currency === 'USDT' ? '₮' : '€'}
-              {Number(balance).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-            </div>
-          )}
+      <div className="relative z-10">
+        <div className="flex items-center gap-2 opacity-60 text-sm font-medium mb-2">
+          <Icon size={15} /> {currency} Ledger
         </div>
-        <Button onClick={onAdd} icon={Plus} size="sm">
-          Cash In/Out
-        </Button>
+        {loading ? (
+          <div className="h-9 w-32 rounded bg-white/10 animate-pulse mb-3" />
+        ) : (
+          <div className="font-display font-bold text-3xl numeric mb-3">
+            {currency === 'USDT' ? '₮' : '€'}
+            {Number(balance).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+          </div>
+        )}
+        <div className="flex gap-2">
+          <button
+            onClick={onCashIn}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-profit-500/20 text-profit-400 border border-profit-500/30 text-sm font-semibold hover:bg-profit-500/30 transition-colors"
+          >
+            <ArrowDownCircle size={16} /> Cash In
+          </button>
+          <button
+            onClick={onCashOut}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-loss-500/20 text-loss-400 border border-loss-500/30 text-sm font-semibold hover:bg-loss-500/30 transition-colors"
+          >
+            <ArrowUpCircle size={16} /> Cash Out
+          </button>
+        </div>
       </div>
     </GlassCard>
   )
