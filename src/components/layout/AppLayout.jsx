@@ -6,15 +6,25 @@ import BottomNavBar from './BottomNavBar'
 
 export default function AppLayout() {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen w-full">
+      {/* Desktop sidebar — completely hidden on mobile via display:none */}
       <Sidebar />
-      <div className="flex-1 min-w-0 p-4 lg:p-6 pb-24 lg:pb-6 max-w-[1600px] mx-auto w-full">
-        <TopBar />
-        <MarketSessionBar />
-        <main className="animate-fade-up">
-          <Outlet />
-        </main>
+
+      {/* Main content */}
+      <div
+        className="flex-1 min-w-0 w-full"
+        style={{ minWidth: 0 }}
+      >
+        <div className="px-4 pt-4 lg:px-6 lg:pt-6 pb-28 lg:pb-6 max-w-screen-xl mx-auto">
+          <TopBar />
+          <MarketSessionBar />
+          <main>
+            <Outlet />
+          </main>
+        </div>
       </div>
+
+      {/* Mobile bottom nav — hidden on desktop */}
       <BottomNavBar />
     </div>
   )

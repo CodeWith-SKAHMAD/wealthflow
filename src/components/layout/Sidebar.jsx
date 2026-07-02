@@ -37,7 +37,20 @@ export const NAV_ITEMS = [
  */
 export default function Sidebar() {
   return (
-    <aside data-wf-desktop-sidebar className="hidden lg:flex lg:sticky lg:top-0 h-screen w-72 shrink-0 flex-col gap-1 p-4 glass !rounded-none lg:!rounded-r-3xl border-r border-white/5">
+    <aside
+      data-wf-desktop-sidebar
+      className="hidden lg:flex lg:sticky lg:top-0 h-screen w-72 shrink-0 flex-col gap-1 p-4 glass !rounded-none lg:!rounded-r-3xl border-r border-white/5"
+      style={{ display: 'none' }}
+      ref={(el) => {
+        if (el) {
+          // Force correct display via JS as a final fallback
+          const mq = window.matchMedia('(min-width: 1024px)')
+          const update = () => { el.style.display = mq.matches ? 'flex' : 'none' }
+          update()
+          mq.addEventListener('change', update)
+        }
+      }}
+    >
       <div className="flex items-center px-2 py-3 mb-2">
         <Logo size="sm" />
       </div>
